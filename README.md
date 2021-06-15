@@ -11,6 +11,17 @@ Supported singables include:
 
 ## Examples
 
+### Fork
+
+An example program showing how the Singer can be used
+in concurrent programming.
+
+The program spawns two threads:
+* one thread sings "do" in an infinite loop
+* one thread sings "si" in an infinite loop
+
+The result is an undeterministic sequence of C and B notes.
+
 ### Opera
 
 A custom rendition of 'Aria di Mezzo Carattere', 

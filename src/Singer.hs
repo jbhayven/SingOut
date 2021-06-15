@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, UndecidableInstances, OverlappingInstances #-}
 
-module Lib where
+module Singer where
 
 import Control.Concurrent
 import Control.Concurrent.STM
@@ -12,7 +12,8 @@ import SolReSol
 data SingData = SingData { 
   device :: Int,
   tempo :: Rational,
-  ready :: TVar Bool
+  ready :: TVar Bool,
+  canAccess :: TVar Bool
 }
 
 type Singer a = StateT SingData IO a
@@ -50,17 +51,27 @@ doIO f arg = schedule $ f arg
 doIONow :: (a -> IO b) -> a -> Singer b
 doIONow f arg = lift $ f arg
 
+safeDo :: TVar Bool -> IO a -> IO a 
+safeDo mutex action = do
+  atomically $ do
+    canAccess <- readTVar mutex
+    check canAccess
+    writeTVar mutex False 
+  result <- action
+  atomically $ writeTVar mutex True
+  return result
+
 sing :: Singable a => a -> Singer ()
 sing s = do
   let melody = toSong s
   state <- get
-  schedule $ MIDI.playDev (device state) melody
+  schedule $ safeDo (canAccess state) (MIDI.playDevS (device state) melody)  
 
 whileSinging :: Singable a => a -> IO () -> Singer ()
 whileSinging s io = do
   let melody = toSong s
   state <- get
-  schedule $ do
+  schedule $ safeDo (canAccess state) $ do
     thread <- forkIO io
     MIDI.playDev (device state) melody
     killThread thread
@@ -70,7 +81,20 @@ sync = do
   state <- get
   lift $ atomically $ readTVar (ready state) >>= check
 
+loopSinger :: Singer a -> Singer ()
+loopSinger s = s >> (loopSinger s)
+
+forkSinger :: Singer () -> Singer ThreadId
+forkSinger s = do 
+  state <- get 
+  firstReady <- lift $ newTVarIO True
+  lift $ forkIO $ execSingerWithData s (state {ready = firstReady})
+
+execSingerWithData :: Singer a -> SingData -> IO a 
+execSingerWithData s singData = evalStateT s singData
+
 execSinger :: Singer a -> Int -> IO a
 execSinger s d = do
   firstReady <- newTVarIO True
-  evalStateT s (SingData d 1.0 firstReady)
+  mutex <- newTVarIO True
+  execSingerWithData s (SingData d 1.0 firstReady mutex)

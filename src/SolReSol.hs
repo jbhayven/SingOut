@@ -34,7 +34,7 @@ toNote char
 
 wordToMusic :: SRSWord -> Music Pitch
 wordToMusic w 
-  | length w == 0 = undefined
+  | length w == 0 = rest en
   | otherwise     = line $ map toNote w
 
 class (SolReSol a) where

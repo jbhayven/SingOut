@@ -2,7 +2,7 @@
 
 module Main where
 
-import Lib
+import Singer
 
 import Control.Concurrent
 import Control.Monad.Trans

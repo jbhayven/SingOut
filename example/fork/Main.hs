@@ -12,14 +12,11 @@ import System.IO
 
 import HSoM.Examples.MUIExamples2
 
-redomifa :: Singer ()
-redomifa = do
-  sing "La redomifa"
-  sing $ "Remi sollafasol dosoldola la redomifa " ++
-       "Faremi redo lafala solsidola dofasolmi fasi " ++
-       "Mimidomi domi solsol fasimila dofa solfasoldo " ++
-       "Dofa faremi redo dore milasi domi misilala "
-  sync
+intertwine :: Singer ()
+intertwine = do
+  forkSinger $ loopSinger $ sing "si"
+  forkSinger $ loopSinger $ sing "do"
+  doIONow threadDelay 10000000 -- limit execution to 10s, otherwise the program will evenutally consume all memory
 
 main :: IO ()
 main = do
@@ -27,5 +24,5 @@ main = do
   case args of
     [] -> devices
     (number : []) -> do
-      let device = read number in execSinger redomifa device
+      let device = read number in execSinger intertwine device
       
