@@ -37,7 +37,7 @@ class (SolReSol a) where
   toSRS     :: a -> [SRSWord]
 
   toMusic   :: a -> Music Pitch
-  toMusic x = (line $ map (\x -> wordToMusic x :+: (rest en)) $ toSRS x) :+: (rest qn)
+  toMusic x = changeInstrument ChoirAahs $ (line $ map (\x -> wordToMusic x :+: (rest en)) $ toSRS x) :+: (rest qn)
 
 -- Instance (SolReSol Bool) :: begin
 

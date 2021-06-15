@@ -24,6 +24,7 @@ dependencies:
 - Euterpea 
 - mtl
 - stm
+- HSoM
 
 library:
   source-dirs: src
