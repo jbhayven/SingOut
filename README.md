@@ -1,7 +1,13 @@
 # SingShout
 
-An implementation of IO monad that instead of writing 
-plays its output in Solresol.
+An wrapper for IO monad that instead of writing 
+sings its output in Solresol, using the Euterpea
+library for MIDI playback.
+
+Supported singables include:
+* integers (Haskell's Int type)
+* strings (in case-insensitive Solresol latin notation, separated with spaces)
+* Euterpea's Music structures 
 
 ## Examples
 
