@@ -29,21 +29,41 @@ instance Singable (MIDI.Music MIDI.Pitch) where
 instance Singable (MIDI.Music (MIDI.Pitch, [MIDI.NoteAttribute])) where
   toSong = id
 
-playWhenAvailable :: Singable a => SingData -> TVar Bool -> a -> IO ()
-playWhenAvailable (SingData d t canTake) canYield singable = do
-  let melody = toSong singable
+forkSchedulingIO :: TVar Bool -> IO () -> TVar Bool -> IO ThreadId
+forkSchedulingIO trigger action isDone = forkIO $ do
   atomically $ do
-    ready <- readTVar canTake
-    check ready
-  MIDI.playDev d melody
-  atomically $ writeTVar canYield True
+    isReady <- readTVar trigger
+    check isReady
+  action 
+  atomically $ writeTVar isDone True
 
-singMe :: Singable a => a -> Singer ()
-singMe s = do
-  singData <- get
+schedule :: IO () -> Singer ()
+schedule action = do
+  state <- get
   forkReady <- lift $ newTVarIO False
-  lift $ forkIO $ playWhenAvailable singData forkReady s
-  put (singData {ready = forkReady})
+  lift $ forkSchedulingIO (ready state) action forkReady
+  put (state {ready = forkReady})
+
+doIO :: (a -> IO ()) -> a -> Singer ()
+doIO f arg = schedule $ f arg
+
+doIONow :: (a -> IO b) -> a -> Singer b
+doIONow f arg = lift $ f arg
+
+sing :: Singable a => a -> Singer ()
+sing s = do
+  let melody = toSong s
+  state <- get
+  schedule $ MIDI.playDev (device state) melody
+
+whileSinging :: Singable a => a -> IO () -> Singer ()
+whileSinging s io = do
+  let melody = toSong s
+  state <- get
+  schedule $ do
+    thread <- forkIO io
+    MIDI.playDev (device state) melody
+    killThread thread
 
 sync :: Singer ()
 sync = do

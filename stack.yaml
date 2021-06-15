@@ -59,7 +59,6 @@ extra-deps:
 - fixed-0.3@sha256:f76bb14011911bdd9d71ecc16ffc8000821adfefdd48b38f952b2484900f37f6,868
 - half-0.3.1@sha256:5aabf5325762b2d6335b9e3f88602431af2b954e14b058bea3e93168a8e0eb53,2058
 
-
 - HCodecs-0.5.1
 - PortMidi-0.2.0.0
 - arrows-0.4.4.2
@@ -70,6 +69,8 @@ extra-deps:
 - semigroups-0.19.1
 - lazysmallcheck-0.6
 - splitmix-0.0.5
+
+- split-0.1.2.3
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

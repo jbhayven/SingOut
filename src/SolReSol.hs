@@ -1,5 +1,9 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+
 module SolReSol (SolReSol(toMusic)) where
 
+import Data.Char
+import Data.List.Split
 import Euterpea
 
 -- SolReSol representations
@@ -101,3 +105,26 @@ instance (SolReSol Int) where
     | a > 0  = peel a
 
 -- Instance (SolReSol Int) :: end
+
+-- Instance (SolReSol String) :: begin
+
+instance (SolReSol String) where
+  toSRS str = 
+    let words = splitOn " " (map toLower str)  
+    in map (\x -> convertAux x values) words
+    where 
+      values = [("do", 1), ("re", 2), ("mi", 3), 
+                ("fa", 4), ("sol", 5), ("la", 6), ("si", 7)]
+
+      convertAux :: String -> [(String, Int)] -> SRSWord
+      convertAux "" [] = []           -- success
+      convertAux _  [] = undefined    -- invalid string
+      convertAux str ((name, val):t) =  
+        let (left, right) = splitAt (length name) str
+        in if (left == name) then 
+          val : (convertAux right values) -- match found
+        else
+          convertAux str t                -- continue searching
+
+-- Instance (SolReSol String) :: end
+

@@ -25,14 +25,15 @@ dependencies:
 - mtl
 - stm
 - HSoM
+- split
 
 library:
   source-dirs: src
 
 executables:
-  SingOut:
-    main:                Main.hs
-    source-dirs:         app
+  MariaAndDraco:
+    main:                opera/Main.hs
+    source-dirs:         example
     ghc-options:
     - -threaded
     - -rtsopts
@@ -40,13 +41,13 @@ executables:
     dependencies:
     - SingOut
 
-tests:
-  SingOut-test:
-    main:                Spec.hs
-    source-dirs:         test
+  LaRedomifa:
+    main:                poem/Main.hs
+    source-dirs:         example
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - SingOut
+
