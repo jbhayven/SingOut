@@ -14,9 +14,8 @@ import HSoM.Examples.MUIExamples2
 
 intertwine :: Singer ()
 intertwine = do
-  forkSinger $ loopSinger $ sing "si"
-  forkSinger $ loopSinger $ sing "do"
-  doIONow threadDelay 10000000 -- limit execution to 10s, otherwise the program will evenutally consume all memory
+  forkSinger $ loopSinger $ sing "si" >> doIONow threadDelay 1000000 -- delay needed to avoid starvation
+  loopSinger $ sing "do" >> doIONow threadDelay 1000000
 
 main :: IO ()
 main = do

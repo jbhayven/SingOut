@@ -3,6 +3,7 @@
 module Singer where
 
 import Control.Concurrent
+import Control.Concurrent.Chan
 import Control.Concurrent.STM
 import Control.Monad.State
 import qualified Euterpea as MIDI
@@ -12,8 +13,8 @@ import SolReSol
 data SingData = SingData { 
   device :: Int,
   tempo :: Rational,
-  ready :: TVar Bool,
-  canAccess :: TVar Bool
+  channel :: Chan (IO ()),
+  counter :: TMVar Integer
 }
 
 type Singer a = StateT SingData IO a
@@ -30,20 +31,22 @@ instance Singable (MIDI.Music MIDI.Pitch) where
 instance Singable (MIDI.Music (MIDI.Pitch, [MIDI.NoteAttribute])) where
   toSong = id
 
-forkSchedulingIO :: TVar Bool -> IO () -> TVar Bool -> IO ThreadId
-forkSchedulingIO trigger action isDone = forkIO $ do
-  atomically $ do
-    isReady <- readTVar trigger
-    check isReady
-  action 
-  atomically $ writeTVar isDone True
+modifyCounter :: TMVar Integer -> (Integer -> Integer) -> IO ()
+modifyCounter counter f = atomically $ do
+  curr <- takeTMVar counter
+  putTMVar counter (f curr)
+
+handleOutputs :: Chan (IO ()) -> TMVar Integer -> IO ()
+handleOutputs channel counter = forever $ do 
+  ioAction <- readChan channel
+  ioAction
+  modifyCounter counter (+(-1))
 
 schedule :: IO () -> Singer ()
 schedule action = do
   state <- get
-  forkReady <- lift $ newTVarIO False
-  lift $ forkSchedulingIO (ready state) action forkReady
-  put (state {ready = forkReady})
+  lift $ modifyCounter (counter state) (+1)
+  lift $ writeChan (channel state) action
 
 doIO :: (a -> IO ()) -> a -> Singer ()
 doIO f arg = schedule $ f arg
@@ -51,50 +54,47 @@ doIO f arg = schedule $ f arg
 doIONow :: (a -> IO b) -> a -> Singer b
 doIONow f arg = lift $ f arg
 
-safeDo :: TVar Bool -> IO a -> IO a 
-safeDo mutex action = do
-  atomically $ do
-    canAccess <- readTVar mutex
-    check canAccess
-    writeTVar mutex False 
-  result <- action
-  atomically $ writeTVar mutex True
-  return result
-
 sing :: Singable a => a -> Singer ()
 sing s = do
   let melody = toSong s
   state <- get
-  schedule $ safeDo (canAccess state) (MIDI.playDevS (device state) melody)  
+  schedule $ play state melody
+  
+play :: SingData -> MIDI.Music1 -> IO ()
+play state melody = do
+  MIDI.playDev (device state) melody
+  threadDelay 2000000 -- perhaps a hack; needed to avoid glitches in my setup
 
 whileSinging :: Singable a => a -> IO () -> Singer ()
 whileSinging s io = do
   let melody = toSong s
   state <- get
-  schedule $ safeDo (canAccess state) $ do
+  schedule $ do
     thread <- forkIO io
-    MIDI.playDev (device state) melody
+    play state melody
     killThread thread
 
 sync :: Singer ()
 sync = do
   state <- get
-  lift $ atomically $ readTVar (ready state) >>= check
+  lift $ atomically $ do
+    curr <- readTMVar (counter state) 
+    check (curr == 0)
 
 loopSinger :: Singer a -> Singer ()
-loopSinger s = s >> (loopSinger s)
+loopSinger s = s >> (loopSinger s) -- lift $ forever s 
 
 forkSinger :: Singer () -> Singer ThreadId
 forkSinger s = do 
-  state <- get 
-  firstReady <- lift $ newTVarIO True
-  lift $ forkIO $ execSingerWithData s (state {ready = firstReady})
+  currState <- get 
+  lift $ forkIO $ execSingerWithData s currState
 
 execSingerWithData :: Singer a -> SingData -> IO a 
 execSingerWithData s singData = evalStateT s singData
 
 execSinger :: Singer a -> Int -> IO a
 execSinger s d = do
-  firstReady <- newTVarIO True
-  mutex <- newTVarIO True
-  execSingerWithData s (SingData d 1.0 firstReady mutex)
+  channel <- newChan
+  counter <- newTMVarIO 0
+  forkIO $ handleOutputs channel counter
+  execSingerWithData s (SingData d 1.0 channel counter)
