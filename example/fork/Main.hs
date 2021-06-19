@@ -12,8 +12,9 @@ import System.IO
 
 intertwine :: Singer ()
 intertwine = do
-  forkSinger $ loopSinger $ sing "si" >> doIONow threadDelay 1000000 -- delay needed to avoid starvation
-  loopSinger $ sing "do" >> doIONow threadDelay 1000000
+  forkSinger $ loopSinger $ (sing "si" >> sync)
+  forkSinger $ loopSinger $ (sing "do" >> sync)
+  doIONow threadDelay (10 * 10^6)
 
 main :: IO ()
 main = do
