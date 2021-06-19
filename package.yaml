@@ -23,8 +23,8 @@ dependencies:
 - Euterpea 
 - mtl
 - stm
-- HSoM
 - split
+- time
 
 library:
   source-dirs: src

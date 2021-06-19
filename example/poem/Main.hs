@@ -10,8 +10,6 @@ import Euterpea
 import System.Environment
 import System.IO
 
-import HSoM.Examples.MUIExamples2
-
 redomifa :: Singer ()
 redomifa = do
   sing "La redomifa"

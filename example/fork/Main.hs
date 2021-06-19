@@ -10,8 +10,6 @@ import Euterpea
 import System.Environment
 import System.IO
 
-import HSoM.Examples.MUIExamples2
-
 intertwine :: Singer ()
 intertwine = do
   forkSinger $ loopSinger $ sing "si" >> doIONow threadDelay 1000000 -- delay needed to avoid starvation
