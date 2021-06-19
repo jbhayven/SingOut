@@ -1,4 +1,4 @@
-# SingShout
+# SingOut
 
 An wrapper for IO monad that instead of writing 
 sings its output in Solresol, using the Euterpea
