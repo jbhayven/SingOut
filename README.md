@@ -32,7 +32,7 @@ The MIDI file was taken from [fflyrics.com](http://www.fflyrics.com/ff6.html).
 
 ### Poem
 
-The program reads a short love poem called 'doremifa'
+The program reads a short love poem called 'La Redomifa'
 written in the Latin notation of Solresol.
 
 The poem can be found [here](http://love.poem.free.fr/constructed-poems/solresol-poem.html).
