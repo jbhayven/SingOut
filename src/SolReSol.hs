@@ -4,6 +4,8 @@ module SolReSol (SolReSol(toMusic)) where
 
 import Data.Char
 import Data.List.Split
+import Text.Read
+
 import Euterpea
 
 -- SolReSol representations
@@ -41,7 +43,7 @@ class (SolReSol a) where
   toSRS     :: a -> [SRSWord]
 
   toMusic   :: a -> Music Pitch
-  toMusic x = changeInstrument ChoirAahs $ (line $ map (\x -> wordToMusic x :+: (rest en)) $ toSRS x) :+: (rest qn)
+  toMusic x = (line $ map (\x -> wordToMusic x :+: (rest en)) $ toSRS x) :+: (rest qn)
 
 -- Instance (SolReSol Bool) :: begin
 
@@ -111,8 +113,13 @@ instance (SolReSol Int) where
 instance (SolReSol String) where
   toSRS str = 
     let words = splitOn " " (map toLower str)  
-    in map (\x -> convertAux x values) words
+    in concat $ map (\x -> convert x) words
     where 
+      convert :: String -> [SRSWord]
+      convert str = case (readMaybe str :: Maybe Int) of
+        Just num -> toSRS num
+        Nothing -> [convertAux str values]
+
       values = [("do", 1), ("re", 2), ("mi", 3), 
                 ("fa", 4), ("sol", 5), ("la", 6), ("si", 7)]
 

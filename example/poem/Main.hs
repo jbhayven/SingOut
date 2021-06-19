@@ -15,6 +15,9 @@ import HSoM.Examples.MUIExamples2
 redomifa :: Singer ()
 redomifa = do
   sing "La redomifa"
+  setVoice Shakuhachi
+  setRelativeTempo 1.3
+  Singer.transpose 12
   sing $ "Remi sollafasol dosoldola la redomifa " ++
        "Faremi redo lafala solsidola dofasolmi fasi " ++
        "Mimidomi domi solsol fasimila dofa solfasoldo " ++
