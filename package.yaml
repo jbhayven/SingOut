@@ -25,6 +25,8 @@ dependencies:
 - stm
 - split
 - time
+- http-client
+- bytestring
 
 library:
   source-dirs: src

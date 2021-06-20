@@ -125,6 +125,9 @@ resetModifiers = do
   SingData dev _ _ _ chan cnt <- get
   put $ SingData dev MIDI.ChoirAahs 1.0 0 chan cnt
 
+liftIO :: IO a -> Singer a 
+liftIO = lift
+
 execSingerWithData :: Singer a -> SingData -> IO a 
 execSingerWithData s singData = evalStateT s singData
 

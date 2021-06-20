@@ -11,6 +11,35 @@ Supported singables include:
 
 ## Examples
 
+Each example, if run with no arguments, will display 
+the list of devices available for MIDI input/output.
+
+```
+>> ./MariaAndDraco
+
+Input devices: 
+  InputDeviceID 1	Midi Through Port-0
+
+Output devices: 
+  OutputDeviceID 0	Midi Through Port-0
+  OutputDeviceID 2	TiMidity port 0
+  OutputDeviceID 3	TiMidity port 1
+  OutputDeviceID 4	TiMidity port 2
+  OutputDeviceID 5	TiMidity port 3
+  OutputDeviceID 6	TiMidity port 0
+  OutputDeviceID 7	TiMidity port 1
+  OutputDeviceID 8	TiMidity port 2
+  OutputDeviceID 9	TiMidity port 3
+```
+
+When a valid `OutputDeviceID` is provided as the first (and only)
+argument, the program will run normally, executing its Singer.
+
+### Fibonacci 
+
+A simple program computing the first 20 Fibonacci numbers
+(starting with 0 as the 0-th Fibonacci number) and singing them out.
+ 
 ### Fork
 
 An example program showing how the Singer can be used
@@ -22,17 +51,20 @@ The program spawns two threads:
 
 The result is an undeterministic sequence of C and B notes.
 
-### Opera
-
-A custom rendition of 'Aria di Mezzo Carattere', 
-a part of the opera sequence from Final Fantasy VI 
-(a.k.a. Final Fantasy III).
-
-The MIDI file was taken from [fflyrics.com](http://www.fflyrics.com/ff6.html).
-
 ### Poem
 
 The program reads a short love poem called 'La Redomifa'
 written in the Latin notation of Solresol.
 
 The poem can be found [here](http://love.poem.free.fr/constructed-poems/solresol-poem.html).
+
+### Opera
+
+A custom rendition of 'Aria di Mezzo Carattere', 
+a part of the opera sequence from Final Fantasy VI 
+(a.k.a. Final Fantasy III).
+
+It combines the multi-threading presented in **Fork** 
+with the solresol reading capabilities presented in **Poem**.
+
+The MIDI file is taken from [fflyrics.com](http://www.fflyrics.com/ff6.html).

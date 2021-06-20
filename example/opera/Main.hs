@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, OverlappingInstances #-}
+{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
 
 module Main where
 
@@ -6,12 +6,18 @@ import Singer
 
 import Control.Concurrent
 import Control.Monad
+import qualified Data.ByteString as BTS
+import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Time.Clock
 import Data.Time.Clock.System
 import Data.Time.Clock.TAI
 import Euterpea
+import Network.HTTP.Client
 import System.Environment
 import System.IO
+
+type Cue = (Int, String -> IO (), String)
+type CueList = [Cue]
 
 charDelay :: Int
 charDelay = 100000
@@ -19,11 +25,11 @@ charDelay = 100000
 putChars :: String -> IO ()
 putChars str = forM_ str (\x -> putChar x >> hFlush stdout >> threadDelay charDelay) 
 
-cues :: [(Int, String -> IO (), String)]
-cues = [
+ariaDiMezzoCarattere :: CueList
+ariaDiMezzoCarattere = [
   (0, putStrLn, "Now playing: Maria & Draco"),
-  (1, putStrLn, ""),
-  (3, putChars, "The forces of the West fell, \nand Maria's castle was taken."),
+  (1000, putStrLn, ""),
+  (3000, putChars, "The forces of the West fell, \nand Maria's castle was taken."),
   (12800, putChars, "\n\nPrince Ralse, of the East, took her hand by force.\nBut she never stopped yearning for Draco..."),
   (22500, putStrLn, ""),
   (23000, putStrLn, ""),
@@ -34,14 +40,14 @@ cues = [
   (28000, putChars, "\n  So far away now."),
   (31300, putChars, "\n  Will I ever"),
   (33800, putChars, " see your smile?"),
-  (38000, putChars, "\n♫ Love goes away,"),
+  (38000, putChars, "\n\n♫ Love goes away,"),
   (41200, putChars, "\n  like night into day."),
   (44500, putChars, "\n♫ It's just a fading dream... ♫"),
   (51700, putChars, "\n\n♫ I'm the darkness,"),
   (55300, putChars, "\n  you're the stars."),
   (58600, putChars, "\n  Our love"),
   (60800, putChars, " is brighter than the sun."),
-  (65400, putChars, "\n♫ For eternity,"),
+  (65400, putChars, "\n\n♫ For eternity,"),
   (68500, putChars, "\n  for me there can be"),
   (72000, putChars, "\n♫ only you, my chosen one... ♫"),
   (77900, putChars, "\n\n♫ Must I forget you?"),
@@ -53,23 +59,34 @@ cues = [
   (97300, putChars, "\n  Speak"),
   (99000, putChars, " to me"),
   (100100, putChars, " once more! ♫"),
-  (105000, putStrLn, ""),
-  (105000, putStrLn, "\n(A vision of DRACO appears)"),
-  (106000, putStrLn, "\n   DRACO:"),
-  (107000, putChars, "  Come, Maria!\n  Follow my lead..."),
-  (114000, putStrLn, "\n\n(DRACO's apparition dances around MARIA)"),
-  (122000, putStrLn, "\n(MARIA tries to follow him, but in vain)"),
+  (104000, putStrLn, ""),
+  (104500, putStrLn, ""),
+  (105000, putStrLn, "(A vision of DRACO appears)"),
+  (106000, putChars, "\n   DRACO:"),
+  (107000, putChars, "\n  Come, Maria!\n  Follow my lead..."),
+  (113000, putStrLn, ""),
+  (113500, putStrLn, ""),
+  (114000, putStrLn, "(DRACO's apparition dances around MARIA)"),
+  (121500, putStrLn, ""),
+  (122000, putStrLn, "(MARIA tries to follow him, but in vain)"),
   (126000, putChars, "\n   DRACO:\n  Ha, ha, ha..."),
-  (130000, putStrLn, "\n\n(DRACO's ghost disappears, leaving a bouquet behind)"),
-  (133000, putStrLn, "\n(MARIA picks the bouquet)"),
-  (136000, putStrLn, "\n(MARIA climbs towards the rampart)"),
+  (129000, putStrLn, ""),
+  (129500, putStrLn, ""),
+  (130000, putStrLn, "(DRACO's ghost disappears, leaving a bouquet behind)"),
+  (132500, putStrLn, ""),
+  (133000, putStrLn, "(MARIA picks the bouquet)"),
+  (135500, putStrLn, ""),
+  (136000, putStrLn, "(MARIA climbs up the tower staircase)"),
   (150500, putStrLn, ""),
   (151000, putStrLn, "   MARIA:"),
   (151500, putChars, "♫ We must part now."),
   (154500, putChars, "\n  My life goes on."),
   (157500, putChars, "\n  But my heart won't give you up"),
-  (161000, putStrLn, "\n\n(MARIA throws the bouquet up into the air and outside the tower parapet)"),
-  (164500, putStrLn, "\n   MARIA:"),
+  (160000, putStrLn, ""),
+  (160500, putStrLn, ""),
+  (161000, putStrLn, "(MARIA throws the bouquet up into the air and outside the tower parapet)"),
+  (164000, putStrLn, ""),
+  (164500, putStrLn, "   MARIA:"),
   (165000, putChars, "♫ Ere I walk away,"),
   (167500, putChars, "\n  let me hear you say."),
   (171000, putChars, "\n  I meant as much to you... ♫"),
@@ -83,17 +100,26 @@ cues = [
   (196700, putChars, "\n  I'll wait"),
   (198500, putChars, " for you"),
   (200000, putChars, " always... ♫"),
-  (205000, putStrLn, "\n\n(A shooting star falls from the sky. MARIA watches it pass.)"),
-  (209000, putStrLn, "\n(The CHANCELLOR climbs towards MARIA)"),
-  (211000, putStrLn, "\n   CHANCELLOR:"),
+  (204000, putStrLn, ""),
+  (204500, putStrLn, ""),
+  (205000, putStrLn, "(A shooting star falls from the sky. MARIA watches it pass.)"),
+  (208500, putStrLn, ""),
+  (209000, putStrLn, "(The CHANCELLOR climbs towards MARIA)"),
+  (210500, putStrLn, ""),
+  (211000, putStrLn, "   CHANCELLOR:"),
   (211500, putStrLn, "Prince Ralse is looking for a dance partner."),
   (214000, putChars, "\nLeave the past behind!\nOur kingdom is adopting the spirit of the East...!"),
-  (221000, putStrLn, "\n\n(The CHANCELLOR leads MARIA inside)"),
-  (222000, putStrLn, "\n(MARIA follows him)"),
-  (223000, putStrLn, "\n(She takes one last look at the night sky)"),
-  (228000, putStrLn, "\n(MARIA turns her back and follows the CHANCELLOR)")]
+  (220000, putStrLn, ""),
+  (220500, putStrLn, ""),
+  (221000, putStrLn, "(The CHANCELLOR leads MARIA inside)"),
+  (222000, putStrLn, ""),
+  (222500, putStrLn, "(MARIA follows him)"),
+  (223500, putStrLn, ""),
+  (224000, putStrLn, "(She takes one last look at the night sky)"),
+  (227500, putStrLn, ""),
+  (228000, putStrLn, "(She turns her back and follows the CHANCELLOR)")]
 
-performCues :: [(Int, String -> IO (), String)] -> IO ()
+performCues :: CueList -> IO ()
 performCues cues = 
   let performCuesAux _ [] = pure ()
       performCuesAux startTime ((nextMilliseconds, action, str):t) = do
@@ -112,20 +138,49 @@ performCues cues =
       performCuesAux startTime cues
     _ -> undefined
 
-opera :: Singer ()
-opera = do
-  celes <- doIONow importFile "example/ff3celes.mid"
+prepareMIDI :: String -> String -> IO ()
+prepareMIDI addr fileName = do
+  putStrLn ("Downloading the music (MIDI) file from " ++ addr ++ "...")
+  manager <- newManager defaultManagerSettings
+  request <- parseRequest ("GET " ++ addr) 
+  response <- httpLbs request manager
+
+  BTS.writeFile fileName (C.toStrict $ responseBody response)
+  putStrLn "File saved!"
+
+introduction :: Singer ()
+introduction = do
+  -- Maybe something that makes more sense?
+  setVoice MelodicDrum
+  Singer.transpose (-24)
+  setRelativeTempo 0.5
+  sing "do dodo  do"
+  resetModifiers 
+
+performOpera :: String -> CueList -> Singer ()
+performOpera fileName cues = do
+  doIONow putStrLn "Scheduling the performance..."
+  celes <- liftIO $ importFile fileName
   case celes of
     Left err -> doIONow print err
     Right mid -> whileSinging (fromMidi mid) (performCues cues)
-  doIONow putStrLn "Scheduling complete. Enjoy!"
+  doIONow putStrLn "Scheduling complete. Enjoy!\n"
   sync
+
+opera :: Singer ()
+opera = do
+  introduction
+
+  liftIO $ prepareMIDI "http://www.fflyrics.com/midis/ff3celes.mid" "ff3celes.mid"
+
+  performOpera "ff3celes.mid" ariaDiMezzoCarattere
 
 main :: IO ()
 main = do
   args <- getArgs
   case args of
     [] -> devices
-    (number : []) -> do
-      let device = read number in execSinger opera device
+    (number : []) ->
+      let device = read number in 
+      execSinger opera device
       
