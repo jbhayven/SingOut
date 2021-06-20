@@ -62,3 +62,14 @@ executables:
     dependencies:
     - SingOut
 
+  Fibonacci:
+    main:                fib/Main.hs
+    source-dirs:         example
+    ghc-options:
+    - -O2
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - SingOut
+

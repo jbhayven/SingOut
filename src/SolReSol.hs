@@ -3,6 +3,7 @@
 module SolReSol (SolReSol(toMusic)) where
 
 import Data.Char
+import Data.List
 import Data.List.Split
 import Text.Read
 
@@ -43,7 +44,7 @@ class (SolReSol a) where
   toSRS     :: a -> [SRSWord]
 
   toMusic   :: a -> Music Pitch
-  toMusic x = (line $ map (\x -> wordToMusic x :+: (rest en)) $ toSRS x) :+: (rest qn)
+  toMusic x = line $ intersperse (rest en) $ map (wordToMusic) $ toSRS x
 
 -- Instance (SolReSol Bool) :: begin
 
@@ -83,28 +84,28 @@ finalizeSmall a
     let r = promote 3 (a-12) in
       [3, r, r]
 
-process :: Int -> [(Int, SRSWord)] -> [SRSWord]
+process :: Int -> [(Int, SRSWord)] -> SRSWord
 process 0 _  = []
-process a [] = [finalizeSmall a]
+process a [] = finalizeSmall a
 process a ((val, word):t)  
   | a >= val = 
     let left  = a `div` val
         right = a `mod` val
     in 
     let left_part  = if left > 1 then process left t else []
-        middle     = [word]
+        middle     = word
         right_part = process right t
     in left_part ++ middle ++ right_part
   | a < val  = process a t
 
-peel :: Int -> [SRSWord]
+peel :: Int -> SRSWord
 peel a = process a bignums
 
 instance (SolReSol Int) where 
   toSRS a
     | a == 0 = [[5, 1]]
-    | a < 0  = [[4, 3, 7, 7]] ++ peel (-a) -- famisisi = 'negative'
-    | a > 0  = peel a
+    | a < 0  = [[4, 3, 7, 7] ++ peel (-a)] -- famisisi = 'negative'
+    | a > 0  = [peel a]
 
 -- Instance (SolReSol Int) :: end
 
@@ -113,7 +114,7 @@ instance (SolReSol Int) where
 instance (SolReSol String) where
   toSRS str = 
     let words = splitOn " " (map toLower str)  
-    in concat $ map (\x -> convert x) words
+    in concat $ map convert words
     where 
       convert :: String -> [SRSWord]
       convert str = case (readMaybe str :: Maybe Int) of

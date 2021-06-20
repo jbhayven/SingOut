@@ -35,10 +35,17 @@ Output devices:
 When a valid `OutputDeviceID` is provided as the first (and only)
 argument, the program will run normally, executing its Singer.
 
-### Fibonacci 
+### Fib (executable: Fibonacci)
 
-A simple program computing the first 20 Fibonacci numbers
-(starting with 0 as the 0-th Fibonacci number) and singing them out.
+A simple program naively computing the first 30 Fibonacci numbers
+(considering 0 as the 0-th Fibonacci number) and singing them out.
+
+This presents how musical output is independent from the computations.
+
+Known bug: when the number of computed numbers is set to 
+a large value, there are issues with playback (signals to the driver
+are not sent at short enough intervals, resulting in a distorted,
+very slow output).
  
 ### Fork
 
@@ -51,14 +58,14 @@ The program spawns two threads:
 
 The result is an undeterministic sequence of C and B notes.
 
-### Poem
+### Poem (executable: LaRedomifa)
 
 The program reads a short love poem called 'La Redomifa'
 written in the Latin notation of Solresol.
 
 The poem can be found [here](http://love.poem.free.fr/constructed-poems/solresol-poem.html).
 
-### Opera
+### Opera (executable: MariaAnDraco)
 
 A custom rendition of 'Aria di Mezzo Carattere', 
 a part of the opera sequence from Final Fantasy VI 

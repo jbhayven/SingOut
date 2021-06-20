@@ -151,8 +151,8 @@ prepareMIDI addr fileName = do
 introduction :: Singer ()
 introduction = do
   -- Maybe something that makes more sense?
-  setVoice MelodicDrum
-  Singer.transpose (-24)
+  setVoice Timpani
+  transposeVoice (-24)
   setRelativeTempo 0.5
   sing "do dodo  do"
   resetModifiers 

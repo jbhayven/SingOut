@@ -5,8 +5,6 @@ module Main where
 import Singer
 
 import Control.Concurrent
-import Control.Monad.Trans
-import Euterpea
 import System.Environment
 import System.IO
 
@@ -14,7 +12,7 @@ intertwine :: Singer ()
 intertwine = do
   forkSinger $ loopSinger $ (sing "si" >> sync)
   forkSinger $ loopSinger $ (sing "do" >> sync)
-  doIONow threadDelay (10 * 10^6)
+  doIONow threadDelay (60 * 10^6)
 
 main :: IO ()
 main = do

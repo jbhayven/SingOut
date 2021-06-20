@@ -1,16 +1,38 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, OverlappingInstances #-}
+{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
 
-module Singer where
+module Singer (
+  Singer,
+  InstrumentName (..),
+  Instrument,
+  devices,
+  liftIO,
+  doIO, 
+  doIONow, 
+  sing, 
+  whileSinging, 
+  sync, 
+  loopSinger, 
+  forkSinger, 
+  setVoice, 
+  transposeVoice,
+  setRelativeTempo, 
+  resetTempo, 
+  resetTransposition, 
+  resetModifiers,
+  execSinger
+) where 
 
 import Control.Concurrent
 import Control.Concurrent.Chan
 import Control.Concurrent.STM
 import Control.Monad.State
-import qualified Euterpea as MIDI
+import Euterpea (
+  InstrumentName (..), Music, Music1, Pitch, NoteAttribute, 
+  devices, toMusic1, playDev, changeInstrument, scaleDurations, shiftPitches1)
 
 import SolReSol
 
-type Instrument =  MIDI.InstrumentName
+type Instrument = InstrumentName
 
 data SingData = SingData { 
   device :: Int,
@@ -24,15 +46,15 @@ data SingData = SingData {
 type Singer a = StateT SingData IO a
 
 class (Singable a) where 
-  toSong  :: MIDI.InstrumentName -> a -> MIDI.Music1
+  toSong  :: InstrumentName -> a -> Music1
 
 instance {-# OVERLAPPABLE #-} (SolReSol a) => Singable a where
-  toSong instr = MIDI.toMusic1 . (MIDI.changeInstrument instr) . toMusic
+  toSong instr = toMusic1 . (changeInstrument instr) . toMusic
 
-instance Singable (MIDI.Music MIDI.Pitch) where
-  toSong _ = MIDI.toMusic1
+instance Singable (Music Pitch) where
+  toSong _ = toMusic1
 
-instance Singable (MIDI.Music (MIDI.Pitch, [MIDI.NoteAttribute])) where
+instance Singable (Music (Pitch, [NoteAttribute])) where
   toSong _ = id
 
 modifyCounter :: TMVar Integer -> (Integer -> Integer) -> IO ()
@@ -51,26 +73,28 @@ schedule action = do
   state <- get
   lift $ modifyCounter (counter state) (+1)
   lift $ writeChan (channel state) action
+  
+play :: SingData -> Music1 -> IO ()
+play state melody = do
+  let scaled     = scaleDurations (tempo state) melody
+      transposed = shiftPitches1 (trans state) scaled
+  playDev (device state) transposed
 
 doIO :: (a -> IO ()) -> a -> Singer ()
 doIO f arg = schedule $ f arg
 
 doIONow :: (a -> IO b) -> a -> Singer b
 doIONow f arg = lift $ f arg
-  
-play :: SingData -> MIDI.Music1 -> IO ()
-play state melody = do
-  let scaled     = MIDI.scaleDurations (tempo state) melody
-      transposed = MIDI.shiftPitches1 (trans state) scaled
-  MIDI.playDev (device state) transposed
-  threadDelay 2000000 -- perhaps a hack; needed to avoid glitches in my setup
 
+-- Schedules an object to be sung out.
 sing :: Singable a => a -> Singer ()
 sing s = do
   state <- get
   let melody = toSong (defaultInstr state) s
   schedule $ play state melody
 
+-- Allows to schedule an IO action performed
+-- over the duration of the singing.
 whileSinging :: Singable a => a -> IO () -> Singer ()
 whileSinging s io = do
   state <- get
@@ -80,6 +104,8 @@ whileSinging s io = do
     play state melody
     killThread thread
 
+-- Flushes the singer output 
+-- (waits for all songs and other deferred IOs to complete)
 sync :: Singer ()
 sync = do
   state <- get
@@ -110,8 +136,8 @@ resetTempo = do
   state <- get
   put (state { tempo = 1.0 })
 
-transpose :: Int -> Singer ()
-transpose pitch = do
+transposeVoice :: Int -> Singer ()
+transposeVoice pitch = do
   state <- get
   put (state { trans = (trans state) + pitch })
 
@@ -123,10 +149,7 @@ resetTransposition = do
 resetModifiers :: Singer ()
 resetModifiers = do 
   SingData dev _ _ _ chan cnt <- get
-  put $ SingData dev MIDI.ChoirAahs 1.0 0 chan cnt
-
-liftIO :: IO a -> Singer a 
-liftIO = lift
+  put $ SingData dev ChoirAahs 1.0 0 chan cnt
 
 execSingerWithData :: Singer a -> SingData -> IO a 
 execSingerWithData s singData = evalStateT s singData
@@ -136,4 +159,4 @@ execSinger s d = do
   channel <- newChan
   counter <- newTMVarIO 0
   forkIO $ handleOutputs channel counter
-  execSingerWithData s (SingData d MIDI.ChoirAahs 1.0 0 channel counter)
+  execSingerWithData s (SingData d ChoirAahs 1.0 0 channel counter)

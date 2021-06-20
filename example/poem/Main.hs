@@ -4,22 +4,21 @@ module Main where
 
 import Singer
 
-import Control.Concurrent
-import Control.Monad.Trans
-import Euterpea
 import System.Environment
 import System.IO
 
 redomifa :: Singer ()
 redomifa = do
-  sing "La redomifa"
   setVoice Shakuhachi
-  setRelativeTempo 1.3
-  Singer.transpose 12
-  sing $ "Remi sollafasol dosoldola la redomifa " ++
-       "Faremi redo lafala solsidola dofasolmi fasi " ++
-       "Mimidomi domi solsol fasimila dofa solfasoldo " ++
-       "Dofa faremi redo dore milasi domi misilala "
+  sing "La redomifa"
+
+  setRelativeTempo 1.4
+  transposeVoice 12
+  sing $ "Remi sollafasol dosoldola la redomifa" 
+  sing $ "Faremi redo lafala solsidola dofasolmi fasi" 
+  sing $ "Mimidomi domi solsol fasimila dofa solfasoldo" 
+  sing $ "Dofa faremi redo dore milasi domi misilala"
+
   sync
 
 main :: IO ()
