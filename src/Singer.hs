@@ -149,7 +149,10 @@ resetTransposition = do
 resetModifiers :: Singer ()
 resetModifiers = do 
   SingData dev _ _ _ chan cnt <- get
-  put $ SingData dev ChoirAahs 1.0 0 chan cnt
+  put $ initData dev chan cnt
+
+initData :: Int -> Chan (IO ()) -> TMVar Integer -> SingData
+initData dev chan cnt = SingData dev ChoirAahs 1.0 0 chan cnt
 
 execSingerWithData :: Singer a -> SingData -> IO a 
 execSingerWithData s singData = evalStateT s singData
@@ -160,4 +163,4 @@ execSinger s d = do
   counter <- newTMVarIO 0
   forkIO $ handleOutputs channel counter
   
-  execSingerWithData s (SingData d ChoirAahs 1.0 0 channel counter)
+  execSingerWithData s $ initData d channel counter
