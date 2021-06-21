@@ -65,7 +65,7 @@ written in the Latin notation of Solresol.
 
 The poem can be found [here](http://love.poem.free.fr/constructed-poems/solresol-poem.html).
 
-### Opera (executable: MariaAnDraco)
+### Opera (executable: MariaAndDraco)
 
 A custom rendition of 'Aria di Mezzo Carattere', 
 a part of the opera sequence from Final Fantasy VI 

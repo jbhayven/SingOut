@@ -159,4 +159,5 @@ execSinger s d = do
   channel <- newChan
   counter <- newTMVarIO 0
   forkIO $ handleOutputs channel counter
+  
   execSingerWithData s (SingData d ChoirAahs 1.0 0 channel counter)
