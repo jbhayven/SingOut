@@ -67,9 +67,8 @@ The poem can be found [here](http://love.poem.free.fr/constructed-poems/solresol
 
 ### Opera (executable: MariaAndDraco)
 
-A custom rendition of 'Aria di Mezzo Carattere', 
-a part of the opera sequence from Final Fantasy VI 
-(a.k.a. Final Fantasy III).
+An adaptation of 'Aria di Mezzo Carattere', a part 
+of the opera sequence from Final Fantasy VI (a.k.a. Final Fantasy III).
 
 It combines the multi-threading presented in **Fork** 
 with the solresol reading capabilities presented in **Poem**.
