@@ -4,19 +4,25 @@ module Main where
 
 import Singer
 
+import Control.Concurrent
+import Control.Monad
 import System.Environment
 import System.IO
 
-computeFib :: Int -> Int
-computeFib 0 = 0
-computeFib 1 = 1
-computeFib n = (computeFib (n-1)) + (computeFib (n-2))
+computeFib :: Int -> Singer Int
+computeFib 0 = pure 0
+computeFib 1 = pure 1
+computeFib n = do
+  left <- computeFib (n-1)
+  right <- computeFib (n-2)
+  when (n > 10) $ liftIO yield -- do not starve the scheduler
+  pure (left + right)
 
 singAllFibs :: Int -> Singer ()
 singAllFibs 0 = pure ()
 singAllFibs i = do
   singAllFibs (i-1)
-  let fib = computeFib i 
+  fib <- computeFib i 
   doIONow putStrLn ("Computed: " ++ show fib)
   doIO putStrLn ("Now playing: " ++ show fib)
   sing fib
@@ -35,5 +41,5 @@ main = do
   case args of
     [] -> devices
     (number : []) -> do
-      let device = read number in execSinger (fibonacciSinger 30) device
+      let device = read number in execSinger (fibonacciSinger 50) device
       

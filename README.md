@@ -37,15 +37,10 @@ argument, the program will run normally, executing its Singer.
 
 ### Fib (executable: Fibonacci)
 
-A simple program naively computing the first 30 Fibonacci numbers
+A simple program naively computing the first 50 Fibonacci numbers
 (considering 0 as the 0-th Fibonacci number) and singing them out.
 
 This presents how musical output is independent from the computations.
-
-Known bug: when the number of computed numbers is set to 
-a large value, there are issues with playback (signals to the driver
-are not sent at short enough intervals, resulting in a distorted,
-very slow output).
  
 ### Fork
 
