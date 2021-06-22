@@ -36,9 +36,8 @@ toNote char
   | otherwise = sounds !! (char - 1)
 
 wordToMusic :: SRSWord -> Music Pitch
-wordToMusic w 
-  | length w == 0 = rest en
-  | otherwise     = line $ map toNote w
+wordToMusic [] = rest en
+wordToMusic w  = line $ map toNote w
 
 class (SolReSol a) where
   toSRS     :: a -> [SRSWord]
